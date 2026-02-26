@@ -28,6 +28,65 @@ function addBook(title, author, genre, publishYear, status, rating, notes) {
   books.push(book);
 }
 
+document.getElementById("bookList").addEventListener("click", function(e) {
+
+  // Options button - toggle dropdown
+  if (e.target.classList.contains("optionsBtn")) {
+    e.stopPropagation();
+    let id = e.target.dataset.id;
+    let dropdown = document.getElementById(`options-${id}`);
+    dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+  }
+
+  // Delete button
+  if (e.target.classList.contains("deleteBtn")) {
+    e.stopPropagation();
+    let id = Number(e.target.dataset.id);
+    let confirm = window.confirm("Are you sure you want to delete this book?");
+    if (confirm) {
+      books = books.filter(function(book) {
+        return book.id !== id;
+      });
+      saveBooks();
+      renderBooks();
+    }
+  }
+
+  // Edit button - open popup with existing values
+  if (e.target.classList.contains("editBtn")) {
+    e.stopPropagation();
+    let id = Number(e.target.dataset.id);
+    openEditPopup(id);
+  }
+
+});
+
+function openEditPopup(id) {
+  let book = books.find(function(b) {
+    return b.id === id;
+  });
+
+  // Pre fill the form with existing book data
+  document.getElementById("title").value = book.title;
+  document.getElementById("author").value = book.author;
+  document.getElementById("genre").value = book.genre;
+  document.getElementById("publishYear").value = book.publishYear;
+  document.getElementById("status").value = book.status;
+  document.getElementById("rating").value = book.rating;
+  document.getElementById("notes").value = book.notes;
+
+  // Store the id being edited
+  document.getElementById("bookForm").dataset.editId = id;
+
+  // Change the popup title and button text
+  document.getElementById("popup").querySelector("h2").textContent = "Edit Book";
+  document.getElementById("bookForm").querySelector("button[type='submit']").textContent = "Save Changes";
+
+  // Open the popup
+  document.getElementById("popup").style.display = "block";
+  document.getElementById("overlay").style.display = "block";
+}
+
 // Display all books on the page
 function renderBooks(list) {
   let container = document.getElementById("bookList");
@@ -46,10 +105,17 @@ function renderBooks(list) {
     return;
   }
 
-  filtered.forEach(function(book) {  // changed from books.forEach to filtered.forEach
-    let card = document.createElement("div");
-    card.innerHTML = `
-      <h3>${book.title}</h3>
+  filtered.forEach(function(book) {
+  let card = document.createElement("div");
+  card.className = "bookCard";
+  card.innerHTML = `
+    <h3>${book.title}</h3>
+    <p>${book.author}</p>
+    <button class="optionsBtn" data-id="${book.id}">⋮</button>
+    <div class="optionsMenu" id="options-${book.id}">
+      <button class="editBtn" data-id="${book.id}">✏ Edit</button>
+      <button class="deleteBtn" data-id="${book.id}">🗑 Delete</button>
+    </div>
       <p>Author: ${book.author}</p>
       <p>Genre: ${book.genre}</p>
       <p>Published: ${book.publishYear}</p>
@@ -62,6 +128,35 @@ function renderBooks(list) {
   });
 }
 
+function deleteBook(id) {
+  books = books.filter(function(book) {
+    return book.id !== id;
+  });
+  saveBooks();
+  renderBooks();
+}
+
+function toggleOptions(id) {
+  // Close all other open menus first
+  document.querySelectorAll(".optionsMenu").forEach(function(menu) {
+    menu.style.display = "none";
+  });
+
+  let menu = document.getElementById("options-" + id);
+  if (menu.style.display === "block") {
+    menu.style.display = "none";
+  } else {
+    menu.style.display = "block";
+  }
+}
+
+// Close options menu when clicking anywhere else
+document.addEventListener("click", function() {
+  document.querySelectorAll(".optionsMenu").forEach(function(menu) {
+    menu.style.display = "none";
+  });
+}); 
+
 // Listen for form submission
 document.getElementById("bookForm").addEventListener("submit", function(e) {
   e.preventDefault();
@@ -73,12 +168,34 @@ document.getElementById("bookForm").addEventListener("submit", function(e) {
   let status = document.getElementById("status").value;
   let rating = document.getElementById("rating").value;
   let notes = document.getElementById("notes").value;
+let editId = this.dataset.editId;
 
-  addBook(title, author, genre, publishYear, status, rating, notes);
+  if (editId) {
+    // Edit existing book
+    let book = books.find(function(b) {
+      return b.id === Number(editId);
+    });
+    book.title = title;
+    book.author = author;
+    book.genre = genre;
+    book.publishYear = publishYear;
+    book.status = status;
+    book.rating = rating;
+    book.notes = notes;
+
+    // Clear the edit id and reset popup title
+    delete this.dataset.editId;
+    document.getElementById("popup").querySelector("h2").textContent = "Add a Book";
+    this.querySelector("button[type='submit']").textContent = "Add Book";
+
+  } else {
+    // Add new book
+    addBook(title, author, genre, publishYear, status, rating, notes);
+  }
+
   saveBooks();
   renderBooks();
-
-  e.target.reset(); // reset here after submission
+  e.target.reset();
   document.getElementById("popup").style.display = "none";
   document.getElementById("overlay").style.display = "none";
 });
@@ -157,8 +274,41 @@ document.getElementById("filterDropdown").addEventListener("click", function(e) 
   e.stopPropagation();
 });
 
+function filterAndSort() {
+  let genreFilter = document.getElementById("filterGenre").value;
+  let authorFilter = document.getElementById("filterAuthor").value;
+  let sortValue = document.getElementById("sortBy").value;
+
+  let filtered = books;
+
+  if (genreFilter !== "All") {
+    filtered = filtered.filter(function(book) {
+      return book.genre === genreFilter;
+    });
+  }
+
+  if (authorFilter !== "All") {
+    filtered = filtered.filter(function(book) {
+      return book.author === authorFilter;
+    });
+  }
+
+  filtered.sort(function(a, b) {
+    if (sortValue === "title") {
+      return a.title.localeCompare(b.title);
+    } else if (sortValue === "rating") {
+      return b.rating - a.rating;
+    } else {
+      return b.addedYear - a.addedYear;
+    }
+  });
+
+  renderBooks(filtered);
+}
+
 // Apply button
 document.getElementById("applyFilter").addEventListener("click", function() {
   filterAndSort();
   document.getElementById("filterDropdown").style.display = "none";
 });
+
