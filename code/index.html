@@ -12,31 +12,39 @@
       <h1>Book Log</h1>
     </header>
 
-  <section id="formSection">
-    <h2>Add a Book</h2>
-    <form id="bookForm">
-      <input type="text" id="title" placeholder="Title" required>
-      <input type="text" id="author" placeholder="Author" required>
-      <input type="text" id="genre" placeholder="Genre" required>
-      <input type="number" id="publishYear" placeholder="Publish Year" required>
-      <select id="status">
-        <option value="Unread">Unread</option>
-        <option value="Reading">Reading</option>
-        <option value="Read">Read</option>
-      </select>
-      <input type="number" id="rating" placeholder="Rating (1-5)" min="1" max="5">
-      <textarea id="notes" placeholder="Notes"></textarea>
-      <button type="submit">Add Book</button>
-    </form>
-  </section>
+<div id="overlay"></div>
 
-  <div id="tabs">
+<div id="popup">
+  <button id="closeForm">✕</button>
+  <h2>Add a Book</h2>
+  <form id="bookForm">
+    <input type="text" id="title" placeholder="Title" required>
+    <input type="text" id="author" placeholder="Author" required>
+    <input type="text" id="genre" placeholder="Genre" required>
+    <input type="number" id="publishYear" placeholder="Publish Year" required>
+    <select id="status">
+      <option value="Unread">Unread</option>
+      <option value="Reading">Reading</option>
+      <option value="Read">Read</option>
+    </select>
+    <input type="number" id="rating" placeholder="Rating (1-5)" min="1" max="5">
+    <textarea id="notes" placeholder="Notes"></textarea>
+    <button type="submit">Add Book</button>
+  </form>
+</div>
+
+<div id="tabs">
   <button class="tab" data-status="Unread">Unread</button>
   <button class="tab" data-status="Reading">Reading</button>
   <button class="tab" data-status="Read">Read</button>
 </div>
 
-  <section id="filterSection">
+<div id="filterContainer">
+  <button id="openFilter">⚙ Filter & Sort</button>
+  <button id="openForm"><span id="btnIcon">+</span><span id="btnText"> Add Book</span></button>
+  
+  <div id="filterDropdown">
+    <label>Genre</label>
     <select id="filterGenre">
       <option value="All">All Genres</option>
       <option value="Fantasy">Fantasy</option>
@@ -46,16 +54,21 @@
       <option value="Non-Fiction">Non-Fiction</option>
     </select>
 
+    <label>Author</label>
     <select id="filterAuthor">
       <option value="All">All Authors</option>
     </select>
 
+    <label>Sort By</label>
     <select id="sortBy">
       <option value="addedYear">Date Added</option>
-      <option value="title">Title</option>
+      <option value="title">Title A-Z</option>
       <option value="rating">Rating</option>
     </select>
-  </section>
+
+    <button id="applyFilter">Apply</button>
+  </div>
+</div>
 
   <div id="bookList"></div>
 
