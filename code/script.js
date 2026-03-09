@@ -5,6 +5,9 @@ function loadBooks() {
   if (stored) {
     books = JSON.parse(stored);
   }
+  populateAuthorFilter();
+  populateGenreFilter();
+  populateDatalist();
 }
 
 // Save books to localStorage
@@ -85,10 +88,16 @@ function openEditPopup(id) {
   // Open the popup
   document.getElementById("popup").style.display = "block";
   document.getElementById("overlay").style.display = "block";
+
+  let ratingInput = document.getElementById("rating");
+  ratingInput.disabled = book.status !== "Read";
 }
 
 // Display all books on the page
 function renderBooks(list) {
+  populateAuthorFilter();
+  populateGenreFilter();
+  populateDatalist();
   let container = document.getElementById("bookList");
   container.innerHTML = "";
 
@@ -96,10 +105,9 @@ function renderBooks(list) {
     list = books;
   }
 
-  let filtered = list.filter(function(book) {
-    return book.status === activeTab;
+  let filtered = activeTab === "All" ? list : list.filter(function(book) {
+  return book.status === activeTab;
   });
-
   if (filtered.length === 0) {
     container.innerHTML = "<p>No books here yet.</p>";
     return;
@@ -110,7 +118,6 @@ function renderBooks(list) {
   card.className = "bookCard";
   card.innerHTML = `
     <h3>${book.title}</h3>
-    <p>${book.author}</p>
     <button class="optionsBtn" data-id="${book.id}">⋮</button>
     <div class="optionsMenu" id="options-${book.id}">
       <button class="editBtn" data-id="${book.id}">✏ Edit</button>
@@ -120,7 +127,7 @@ function renderBooks(list) {
       <p>Genre: ${book.genre}</p>
       <p>Published: ${book.publishYear}</p>
       <p>Status: ${book.status}</p>
-      <p>Rating: ${book.rating}</p>
+      <p>Rating: <span style="color: gold; font-size: 16px;">${renderStars(book.rating)}</span></p>
       <p>Notes: ${book.notes}</p>
       <p>Added: ${book.addedYear}</p>
     `;
@@ -175,6 +182,9 @@ let editId = this.dataset.editId;
     let book = books.find(function(b) {
       return b.id === Number(editId);
     });
+
+    let previousStatus = book.status;
+
     book.title = title;
     book.author = author;
     book.genre = genre;
@@ -183,10 +193,18 @@ let editId = this.dataset.editId;
     book.rating = rating;
     book.notes = notes;
 
+    if (status === "Read" && previousStatus !== "Read") {
+      showCelebration(title);
+    }
+
+    activeTab = status; // Switch to the tab of the updated book
+
     // Clear the edit id and reset popup title
     delete this.dataset.editId;
     document.getElementById("popup").querySelector("h2").textContent = "Add a Book";
     this.querySelector("button[type='submit']").textContent = "Add Book";
+
+    updateActivetab();
 
   } else {
     // Add new book
@@ -200,12 +218,13 @@ let editId = this.dataset.editId;
   document.getElementById("overlay").style.display = "none";
 });
 
-let activeTab = "Unread"; // default tab on page load
+let activeTab = "All"; // default tab on page load
 
 // Add event listeners to each tab button
 document.querySelectorAll(".tab").forEach(function(tab) {
   tab.addEventListener("click", function() {
     activeTab = this.dataset.status;
+    document.getElementById("searchInput").value = "";
     updateActivetab();
     renderBooks();
   });
@@ -279,7 +298,10 @@ function filterAndSort() {
   let authorFilter = document.getElementById("filterAuthor").value;
   let sortValue = document.getElementById("sortBy").value;
 
-  let filtered = books;
+  // Start with only books matching the active tab
+  let filtered = activeTab === "All" ? [...books] : books.filter(function(book) {
+  return book.status === activeTab;
+  });
 
   if (genreFilter !== "All") {
     filtered = filtered.filter(function(book) {
@@ -310,5 +332,120 @@ function filterAndSort() {
 document.getElementById("applyFilter").addEventListener("click", function() {
   filterAndSort();
   document.getElementById("filterDropdown").style.display = "none";
+});
+
+//Populate the filter for authors entered in the book list
+function populateAuthorFilter() {
+  let authorSelect = document.getElementById("filterAuthor");
+  
+  // Clear existing options except "All Authors"
+  authorSelect.innerHTML = '<option value="All">All Authors</option>';
+  
+  // Get unique authors from books array
+  let uniqueAuthors = [...new Set(books.map(function(book) {
+    return book.author;
+  }))];
+
+  uniqueAuthors.forEach(function(author) {
+    let option = document.createElement("option");
+    option.value = author;
+    option.textContent = author;
+    authorSelect.appendChild(option);
+  });
+}
+
+function populateGenreFilter() {
+  let genreSelect = document.getElementById("filterGenre");
+
+  genreSelect.innerHTML = '<option value="All">All Genres</option>';
+
+  let uniqueGenres = [...new Set(books.map(function(book) {
+    return book.genre;
+  }))];
+
+  uniqueGenres.forEach(function(genre) {
+    let option = document.createElement("option");
+    option.value = genre;
+    option.textContent = genre;
+    genreSelect.appendChild(option);
+  });
+}
+
+function renderStars(rating) {
+  let stars = "";
+  for (let i = 1; i <= 5; i++) {
+    if (i <= rating) {
+      stars += "★";
+    } else {
+      stars += "☆";
+    }
+  }
+  return stars;
+}
+
+document.getElementById("status").addEventListener("change", function() {
+  let ratingInput = document.getElementById("rating");
+  if (this.value === "Read") {
+    ratingInput.disabled = false;
+  } else {
+    ratingInput.disabled = true;
+    ratingInput.value = "";
+  }
+});
+
+function playCheer() {
+  let ctx = new AudioContext();
+
+  function playNote(freq, start, duration) {
+    let osc = ctx.createOscillator();
+    let gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = freq;
+    osc.type = "sine";
+    gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+    osc.start(ctx.currentTime + start);
+    osc.stop(ctx.currentTime + start + duration);
+  }
+
+  // A little ascending celebratory jingle
+  playNote(400, 0, 0.15);
+  playNote(500, 0.15, 0.15);
+  playNote(600, 0.3, 0.15);
+  playNote(800, 0.45, 0.4);
+}
+
+function showCelebration(title) {
+  document.getElementById("celebrationTitle").textContent = `"${title}"`;
+  document.getElementById("celebrationOverlay").classList.add("active");
+  playCheer();
+}
+
+document.getElementById("celebrationClose").addEventListener("click", function() {
+  document.getElementById("celebrationOverlay").classList.remove("active");
+});
+
+function populateDatalist() {
+  let authorList = document.getElementById("authorSuggestions");
+  let genreList = document.getElementById("genreSuggestions");
+
+  let uniqueAuthors = [...new Set(books.map(b => b.author))];
+  let uniqueGenres = [...new Set(books.map(b => b.genre))];
+
+  authorList.innerHTML = uniqueAuthors.map(a => `<option value="${a}">`).join("");
+  genreList.innerHTML = uniqueGenres.map(g => `<option value="${g}">`).join("");
+}
+
+document.getElementById("searchInput").addEventListener("input", function() {
+  let query = this.value.toLowerCase().trim();
+
+  let filtered = books.filter(function(book) {
+  return (activeTab === "All" || book.status === activeTab) &&
+    (book.title.toLowerCase().includes(query) ||
+     book.author.toLowerCase().includes(query));
+});
+
+  renderBooks(filtered);
 });
 
