@@ -382,23 +382,45 @@ header {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  #filterSection {
+  #filterContainer {
     flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-right: 0;
+    width: 90%;
   }
 
-  #formSection {
-    margin: 20px;
+  #searchInput {
+    width: 100%;
+  }
+
+  #openForm {
+    position: static;
+    width: 100%;
+  }
+
+  #openForm:hover {
+    width: 100%;
+  }
+
+  #openFilter {
+    width: 100%;
   }
 }
 
-/* Mobile - 1 column */
 @media (max-width: 480px) {
   #bookList {
     grid-template-columns: 1fr;
+    width: 90%;
   }
 
-  #filterSection select {
-    width: 100%;
+  #filterContainer {
+    width: 90%;
+  }
+
+  #tabs {
+    max-width: 90%;
+    flex-wrap: wrap;
   }
 
   header h1 {
