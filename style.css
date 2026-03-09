@@ -495,7 +495,8 @@ header {
    ============================================================ */
 @media (max-width: 768px) {
   #bookList {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
+    width: 90%;
   }
 
   #filterContainer {
@@ -507,17 +508,18 @@ header {
   }
 
   #searchInput {
-    width: 100%;
-    position: static;
+    width: 100% !important;
+    position: static !important;
+    right: auto !important;
   }
 
   #openForm {
-    position: static;
-    width: 100%;
+    position: static !important;
+    width: 100% !important;
   }
 
   #openForm:hover {
-    width: 100%;
+    width: 100% !important;
   }
 
   #openFilter {
