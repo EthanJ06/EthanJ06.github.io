@@ -5,6 +5,7 @@ function loadBooks() {
   if (stored) {
     books = JSON.parse(stored);
   }
+  loadDefaultBooks();
   populateAuthorFilter();
   populateGenreFilter();
   populateDatalist();
@@ -15,19 +16,56 @@ function saveBooks() {
   localStorage.setItem("books", JSON.stringify(books));
 }
 
+function loadDefaultBooks() {
+  if (localStorage.getItem("defaultsLoaded")) return;
+
+  let defaults = [
+    { title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy", publishYear: 1937, status: "Read", rating: 5, notes: "A timeless classic.", coverUrl: "https://covers.openlibrary.org/b/id/8406786-M.jpg"},
+    { title: "1984", author: "George Orwell", genre: "Dystopian", publishYear: 1949, status: "Read", rating: 5, notes: "Chilling and thought provoking." },
+    { title: "Dune", author: "Frank Herbert", genre: "Sci-Fi", publishYear: 1965, status: "Reading", rating: 4, notes: "Dense but rewarding." },
+    { title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Classic", publishYear: 1925, status: "Read", rating: 4, notes: "Beautiful writing style.", coverUrl: "https://covers.openlibrary.org/b/isbn/9780743273565-M.jpg" },
+    { title: "Brave New World", author: "Aldous Huxley", genre: "Dystopian", publishYear: 1932, status: "Unread", rating: null, notes: "", coverUrl: "https://covers.openlibrary.org/b/isbn/9780060850524-M.jpg" },
+    { title: "The Name of the Wind", author: "Patrick Rothfuss", genre: "Fantasy", publishYear: 2007, status: "Reading", rating: null, notes: "Incredible storytelling." },
+    { title: "Project Hail Mary", author: "Andy Weir", genre: "Sci-Fi", publishYear: 2021, status: "Read", rating: 5, notes: "Best sci-fi in years." },
+    { title: "To Kill a Mockingbird", author: "Harper Lee", genre: "Classic", publishYear: 1960, status: "Read", rating: 5, notes: "Essential reading." },
+    { title: "The Hitchhiker's Guide to the Galaxy", author: "Douglas Adams", genre: "Sci-Fi", publishYear: 1979, status: "Unread", rating: null, notes: "" },
+    { title: "Circe", author: "Madeline Miller", genre: "Fantasy", publishYear: 2018, status: "Unread", rating: null, notes: "Heard great things." },
+    { title: "The Alchemist", author: "Paulo Coelho", genre: "Fiction", publishYear: 1988, status: "Read", rating: 4, notes: "A moving journey." },
+    { title: "Educated", author: "Tara Westover", genre: "Memoir", publishYear: 2018, status: "Reading", rating: null, notes: "Absolutely gripping." }
+  ];
+
+  defaults.forEach(function(b) {
+    books.push({
+      id: Date.now() + Math.random(),
+      title: b.title,
+      author: b.author,
+      genre: b.genre,
+      publishYear: b.publishYear,
+      status: b.status,
+      rating: b.rating,
+      notes: b.notes,
+      addedYear: new Date().getFullYear(),
+      coverUrl: b.coverUrl || null,
+    });
+  });
+
+  localStorage.setItem("defaultsLoaded", "true");
+  saveBooks();
+}
+
 function addBook(title, author, genre, publishYear, status, rating, notes) {
   let book = {
     id: Date.now(),
-    title: title,
-    author: author,
-    genre: genre,
-    publishYear: publishYear,
-    status: status,
-    rating: rating, 
-    notes: notes,
-    addedYear: new Date().getFullYear()
+    title,
+    author,
+    genre,
+    publishYear,
+    status,
+    rating,
+    notes,
+    addedYear: new Date().getFullYear(),
+    coverUrl: null,
   };
-
   books.push(book);
 }
 
@@ -43,17 +81,23 @@ document.getElementById("bookList").addEventListener("click", function(e) {
 
   // Delete button
   if (e.target.classList.contains("deleteBtn")) {
-    e.stopPropagation();
-    let id = Number(e.target.dataset.id);
-    let confirm = window.confirm("Are you sure you want to delete this book?");
-    if (confirm) {
-      books = books.filter(function(book) {
-        return book.id !== id;
-      });
-      saveBooks();
-      renderBooks();
-    }
+  e.stopPropagation();
+  let id = Number(e.target.dataset.id);
+  let confirm = window.confirm("Are you sure you want to delete this book?");
+  if (confirm) {
+    books = books.filter(function(book) {
+      return book.id !== id;
+    });
+
+    // Clear any stale edit state
+    delete document.getElementById("bookForm").dataset.editId;
+    document.getElementById("popup").querySelector("h2").textContent = "Add a Book";
+    document.getElementById("bookForm").querySelector("button[type='submit']").textContent = "Add Book";
+
+    saveBooks();
+    renderBooks();
   }
+}
 
   // Edit button - open popup with existing values
   if (e.target.classList.contains("editBtn")) {
@@ -117,22 +161,36 @@ function renderBooks(list) {
   let card = document.createElement("div");
   card.className = "bookCard";
   card.innerHTML = `
-    <h3>${book.title}</h3>
-    <button class="optionsBtn" data-id="${book.id}">⋮</button>
-    <div class="optionsMenu" id="options-${book.id}">
-      <button class="editBtn" data-id="${book.id}">✏ Edit</button>
-      <button class="deleteBtn" data-id="${book.id}">🗑 Delete</button>
+  <div class="cardInner">
+    <div class="cardCover">
+      ${book.coverUrl 
+        ? `<img src="${book.coverUrl}" alt="${book.title} cover">` 
+        : `<div class="noCover">No Cover</div>`}
     </div>
-      <p>Author: ${book.author}</p>
+    <div class="cardInfo">
+      <h3>${book.title}</h3>
+      <p class="cardAuthor">${book.author}</p>
       <p>Genre: ${book.genre}</p>
       <p>Published: ${book.publishYear}</p>
       <p>Status: ${book.status}</p>
       <p>Rating: <span style="color: gold; font-size: 16px;">${renderStars(book.rating)}</span></p>
-      <p>Notes: ${book.notes}</p>
-      <p>Added: ${book.addedYear}</p>
-    `;
+      <p>Notes: <span class="notesText" id="notes-${book.id}">${book.notes}</span>
+        ${book.notes && book.notes.length > 60 
+        ? `<button class="readMoreBtn" data-id="${book.id}">Read more</button>` 
+        : ""}
+      </p>
+    </div>
+  </div>
+  <button class="optionsBtn" data-id="${book.id}">⋮</button>
+  <div class="optionsMenu" id="options-${book.id}">
+    <button class="editBtn" data-id="${book.id}">✏ Edit</button>
+    <button class="deleteBtn" data-id="${book.id}">🗑 Delete</button>
+  </div>
+`;
     container.appendChild(card);
   });
+
+  loadCoversForBooks();
 }
 
 function deleteBook(id) {
@@ -449,3 +507,52 @@ document.getElementById("searchInput").addEventListener("input", function() {
   renderBooks(filtered);
 });
 
+async function fetchBookCover(title, author) {
+  try {
+    let query = encodeURIComponent(`${title} ${author}`);
+    let response = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=1`);
+    let data = await response.json();
+    if (data.docs.length > 0 && data.docs[0].cover_i) {
+      return `https://covers.openlibrary.org/b/id/${data.docs[0].cover_i}-M.jpg`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadCoversForBooks() {
+  for (let book of books) {
+    if (!book.coverUrl) {
+      book.coverUrl = await fetchBookCover(book.title, book.author);
+      if (book.coverUrl) {
+        let optionsMenu = document.getElementById("options-" + book.id);
+        if (optionsMenu) {
+          let bookCard = optionsMenu.parentElement;
+          if (bookCard) {
+            let coverDiv = bookCard.querySelector(".cardCover");
+            if (coverDiv) {
+              coverDiv.innerHTML = `<img src="${book.coverUrl}" alt="${book.title} cover">`;
+            }
+          }
+        }
+        saveBooks();
+      }
+    }
+  }
+}
+
+document.getElementById("bookList").addEventListener("click", function(e) {
+  if (e.target.classList.contains("readMoreBtn")) {
+    e.stopPropagation();
+    let id = e.target.dataset.id;
+    let notesSpan = document.getElementById("notes-" + id);
+    if (notesSpan.classList.contains("expanded")) {
+      notesSpan.classList.remove("expanded");
+      e.target.textContent = "Read more";
+    } else {
+      notesSpan.classList.add("expanded");
+      e.target.textContent = "Read less";
+    }
+  }
+});
