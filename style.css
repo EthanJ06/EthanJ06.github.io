@@ -139,7 +139,8 @@ header {
   font-size: 14px;
   width: 250px;
   position: absolute;
-  right: 575px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* Add Book button */
@@ -508,11 +509,12 @@ header {
   }
 
   #searchInput {
-    width: 100% !important;
-    position: static !important;
-    right: auto !important;
-  }
-
+  width: 100% !important;
+  position: static !important;
+  left: auto !important;
+  transform: none !important;
+ }
+ 
   #openForm {
     position: static !important;
     width: 100% !important;
