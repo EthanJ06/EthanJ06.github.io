@@ -23,7 +23,7 @@ function loadDefaultBooks() {
   let defaults = [
     { title: "The Hobbit",                          author: "J.R.R. Tolkien",       genre: "Fantasy",   publishYear: 1937, status: "Read",    rating: 5,    notes: "A timeless classic.",          coverUrl: "https://covers.openlibrary.org/b/id/8406786-M.jpg" },
     { title: "1984",                                author: "George Orwell",         genre: "Dystopian", publishYear: 1949, status: "Read",    rating: 5,    notes: "Chilling and thought provoking." },
-    { title: "Dune",                                author: "Frank Herbert",         genre: "Sci-Fi",    publishYear: 1965, status: "Reading", rating: 4,    notes: "Dense but rewarding." },
+    { title: "Dune",                                author: "Frank Herbert",         genre: "Sci-Fi",    publishYear: 1965, status: "Reading", rating: null,    notes: "Dense but rewarding." },
     { title: "The Great Gatsby",                    author: "F. Scott Fitzgerald",   genre: "Classic",   publishYear: 1925, status: "Read",    rating: 4,    notes: "Beautiful writing style.",     coverUrl: "https://covers.openlibrary.org/b/isbn/9780743273565-M.jpg" },
     { title: "Brave New World",                     author: "Aldous Huxley",         genre: "Dystopian", publishYear: 1932, status: "Unread",  rating: null, notes: "",                             coverUrl: "https://covers.openlibrary.org/b/isbn/9780060850524-M.jpg" },
     { title: "The Name of the Wind",                author: "Patrick Rothfuss",      genre: "Fantasy",   publishYear: 2007, status: "Reading", rating: null, notes: "Incredible storytelling." },
